@@ -37,6 +37,13 @@ const updateAmount = (payload: string, amount: string) => {
   return `${crcInput}${crc16(crcInput)}`
 }
 
+const normalizePayload = (value: string) => value.trim().replace(/[\r\n\t ]/g, '')
+
+const isQrisPayload = (value: string) => {
+  if (!value.startsWith('000201') || !value.includes('6304')) return false
+  return updateAmount(value, '1') !== null
+}
+
 function App() {
   const [payload, setPayload] = useState('')
   const [amountDigits, setAmountDigits] = useState('')
@@ -59,9 +66,15 @@ function App() {
     if (!file.type.startsWith('image/')) { setError('Please choose a PNG or JPG image.'); return }
     try {
       const result = await QrScanner.scanImage(file, { returnDetailedScanResult: true })
-      if (!result.data.startsWith('000201')) throw new Error('Not QRIS')
-      setPayload(result.data); setFileName(file.name); setError('')
-    } catch { setPayload(''); setFileName(''); setError('We could not read a valid QRIS from that image.') }
+      const decodedPayload = normalizePayload(result.data)
+      if (!isQrisPayload(decodedPayload)) {
+        setPayload('')
+        setFileName('')
+        setError(decodedPayload.startsWith('http') ? 'QR terbaca, tetapi ini bukan QRIS statis. Gunakan QRIS merchant dari DANA.' : 'QR terbaca, tetapi formatnya bukan QRIS yang bisa diubah nominalnya.')
+        return
+      }
+      setPayload(decodedPayload); setFileName(file.name); setError('')
+    } catch { setPayload(''); setFileName(''); setError('Gambar QR belum terbaca. Coba gunakan gambar yang lebih jelas dan tidak terpotong.') }
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
