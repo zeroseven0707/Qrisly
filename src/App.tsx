@@ -37,7 +37,7 @@ const updateAmount = (payload: string, amount: string) => {
   return `${crcInput}${crc16(crcInput)}`
 }
 
-const normalizePayload = (value: string) => value.trim().replace(/[\r\n\t ]/g, '')
+const normalizePayload = (value: string) => value.trim().replace(/[\r\n\t]/g, '')
 
 const isQrisPayload = (value: string) => {
   if (!value.startsWith('000201') || !value.includes('6304')) return false
