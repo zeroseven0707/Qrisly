@@ -32,8 +32,14 @@ const updateAmount = (payload: string, amount: string) => {
     index = end
   }
   const amountField = `54${amount.length.toString().padStart(2, '0')}${amount}`
-  const nextFields = fields.filter((field) => field.slice(0, 2) !== '54')
-  const crcInput = `${[...nextFields, amountField].join('')}6304`
+  const amountIndex = fields.findIndex((field) => field.slice(0, 2) === '54')
+  if (amountIndex >= 0) {
+    fields[amountIndex] = amountField
+  } else {
+    const merchantCountryIndex = fields.findIndex((field) => field.slice(0, 2) === '58')
+    fields.splice(merchantCountryIndex >= 0 ? merchantCountryIndex : fields.length, 0, amountField)
+  }
+  const crcInput = `${fields.join('')}6304`
   return `${crcInput}${crc16(crcInput)}`
 }
 
